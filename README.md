@@ -1,4 +1,6 @@
-# TORA 0.9 — Evoluciones clínicas, formatos y cuentas individuales
+# TORA 1.2 — IA Groq/Gemini, evoluciones clínicas, feedback y cuentas individuales
+
+**TORA 1.2:** se añadió Groq GPT-OSS 120B, selector manual Groq/Gemini, comparación en un mismo caso ficticio, inserción determinista de datos clínicos y un centro de feedback (tras migración SQL incremental). Consulta [GUIA_INSTALACION_TORA_1_2.md](GUIA_INSTALACION_TORA_1_2.md) para instalación y límites.
 
 **TORA** es un prototipo académico de apoyo a la redacción clínica para casos **ficticios o completamente desidentificados**. No es una ficha clínica certificada, no sustituye la evaluación de un profesional y no está habilitado para el procesamiento de información identificable de pacientes reales.
 

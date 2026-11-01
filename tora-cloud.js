@@ -18,3 +18,5 @@ export function installAdminNav(me){
  const nav=document.querySelector('.side-nav');if(!nav||nav.querySelector('a[href="/administracion"]'))return;
  const a=document.createElement('a');a.className='nav-link';a.href='/administracion';a.textContent='♧ Administración';nav.append(a);
 }
+
+export async function remoteSendFeedback(feedback){return cloudRequest('/api/data/feedback',{method:'POST',body:JSON.stringify(feedback)})}

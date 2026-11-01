@@ -124,6 +124,14 @@ export function createSupabaseGateway(){
    if(v.id){if(!/^[0-9a-f-]{36}$/i.test(v.id))throw err('ID inválido.');return rest(`/evolutions?id=eq.${encodeURIComponent(v.id)}`,person.token,{method:'PATCH',body:row,extraHeaders:{Prefer:'return=representation'}})}
    return rest('/evolutions',person.token,{method:'POST',body:row,extraHeaders:{Prefer:'return=representation'}})},
   async deleteEvolution(person,id){if(!/^[0-9a-f-]{36}$/i.test(id))throw err('ID inválido.');return rest(`/evolutions?id=eq.${encodeURIComponent(id)}`,person.token,{method:'DELETE',extraHeaders:{Prefer:'return=representation'}})},
+  async listFeedback(person){return rest('/user_feedback?select=id,category,description,status,created_at&order=created_at.desc&limit=50',person.token)},
+  async sendFeedback(person,input){
+   if(!input||!['error','sugerencia','calidad'].includes(input.category)||!isText(input.description,15,1500))throw err('Selecciona la categoría y escribe entre 15 y 1500 caracteres.');
+   const hazards=scanSensitive(input.description);if(hazards.length)throw err('Detectamos posibles datos identificables. Describe el problema sin información de pacientes.',422);
+   return rest('/user_feedback',person.token,{method:'POST',body:{user_id:person.id,category:input.category,description:input.description.trim(),status:'nuevo'},extraHeaders:{Prefer:'return=representation'}})
+  },
+  async adminFeedback(person){if(person.role!=='admin'||person.status!=='approved')throw err('Acceso restringido a administrador.',403);return rest('/rpc/tora_admin_list_feedback',person.token,{method:'POST',body:{}})},
+  async adminFeedbackStatus(person,input){if(person.role!=='admin'||person.status!=='approved')throw err('Acceso restringido a administrador.',403);if(!/^[0-9a-f-]{36}$/i.test(input?.id)||!['nuevo','revisando','resuelto'].includes(input?.status))throw err('Solicitud inválida.');return rest('/rpc/tora_admin_update_feedback',person.token,{method:'POST',body:{p_id:input.id,p_status:input.status}})},
   async adminList(person){if(person.role!=='admin'||person.status!=='approved')throw err('Acceso restringido a administrador.',403);return rest('/rpc/tora_admin_list_profiles',person.token,{method:'POST',body:{}})},
   async adminSet(person,input){if(person.role!=='admin'||person.status!=='approved')throw err('Acceso restringido a administrador.',403);if(!/^[0-9a-f-]{36}$/i.test(input?.user_id)||!['approved','pending','suspended'].includes(input?.new_status))throw err('Solicitud inválida.');return rest('/rpc/tora_admin_set_status',person.token,{method:'POST',body:{p_user_id:input.user_id,p_status:input.new_status}})}
  };
