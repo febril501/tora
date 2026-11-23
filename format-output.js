@@ -29,7 +29,7 @@ export function ensureFormatHeadings(note,format){
 
 // TORA 1.2 — Los datos medidos o declarados en el formulario NO dependen de la IA.
 // Se insertan en los apartados propios del usuario, conservando el orden de encabezados.
-import {vitalSignsText} from './workflow-engine.js';
+import {vitalSignsText,pediatricFactsText} from './workflow-engine.js';
 const normalizeTitle=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 const isIdentical=(actual,expected)=>normalizeTitle(actual)===normalizeTitle(expected);
 const escapeRegExp=s=>String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -62,11 +62,11 @@ export function ensureClinicalFacts(note,workflow){
  if(!workflow||typeof workflow!=='object')return String(note||'').trim();
  let text=String(note||'').trim();
  const fields=workflow.vitals||{};
- const measures=[['pa','PA','\\d{1,3}\\s*\\/\\s*\\d{1,3}','mmHg'],['fc','FC','\\d{1,3}','lpm'],['fr','FR','\\d{1,3}','rpm'],['temp','T(?:°|emperatura)?','\\d{1,2}(?:[.,]\\d)?','°C'],['sat','SatO[₂2]','\\d{1,3}(?:[.,]\\d)?','%']];
+ const measures=[['pa','PA','\\d{1,3}\\s*\\/\\s*\\d{1,3}','mmHg'],['fc','FC','\\d{1,3}','lpm'],['fr','FR','\\d{1,3}','rpm'],['temp','T(?:°|emperatura)?','\\d{1,2}(?:[.,]\\d)?','°C'],['sat','SatO[₂2]','\\d{1,3}(?:[.,]\\d)?','%'],['fio2','FiO[₂2]','\\d{1,3}(?:[.,]\\d)?','%']];
  const lines=[];
  for(const [key,label,numberPattern,unit] of measures){
   const v=String(fields[key]||'').trim();if(!v)continue;
-  const pretty=key==='temp'?'T°':key==='sat'?'SatO₂':label;
+  const pretty=key==='temp'?'T°':key==='sat'?'SatO₂':key==='fio2'?'FiO₂':label;
   const canonical=`${pretty} ${v} ${unit}`;
   // Si la IA puso otro valor para esta MISMA medición estructurada, sustituirlo por el registrado.
   const existing=new RegExp(`\\b${label}\\s*[:=]?\\s*${numberPattern}\\s*(?:${escapeRegExp(unit)})?`,'gi');
@@ -74,7 +74,16 @@ export function ensureClinicalFacts(note,workflow){
   if(!text.includes(canonical))lines.push(canonical);
  }
  const fullVitals=vitalSignsText(fields);
- if(fullVitals&&lines.length)text=addToKnownHeading(text,workflow.clinicalFormat,['signos vital','vitales','constantes'],lines,'SIGNOS VITALES ACTUALES');
+ if(fullVitals&&lines.length)text=addToKnownHeading(text,workflow.clinicalFormat,['signos vital','vitales','constantes','csv'],lines,'SIGNOS VITALES ACTUALES');
+ if(workflow.specialty==='pediatria'){
+  const ped=pediatricFactsText(workflow.pediatrics);
+  if(ped){
+   const wt=String(workflow.pediatrics?.weightKg||'').trim();
+   if(wt)text=text.replace(/\bPeso\s*:\s*\d{1,3}(?:[.,]\d{1,3})?\s*kg\b/gi,`Peso: ${wt} kg`);
+   const facts=ped.split(' · ').filter(f=>!text.includes(f));
+   if(facts.length)text=addToKnownHeading(text,workflow.clinicalFormat,['subjetivo','identificacion'],facts,'DATOS PEDIÁTRICOS');
+  }
+ }
  if(workflow.specialty==='ginecologia'){
   const obs=workflow.obstetrics||{};
   const missing=[];

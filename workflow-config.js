@@ -81,14 +81,19 @@ export const FLOW_SPECIALTIES = {
     section('plan','Conducta y seguimiento',[],'Plan ya acordado',['plan','alta'])
   ]},
   pediatria:{name:'Pediatría',icon:'🧒',sections:[
-    section('antecedentes','Edad y antecedentes',[],'Antecedentes perinatales si corresponden',['edad','perinatal','nacimiento']),
-    section('eventos','Síntomas y eventos',[],'Diferenciar información del cuidador y paciente',['fiebre','tos','vómitos']),
-    section('alimentacion','Alimentación, hidratación y eliminación',[],'Volúmenes si están cuantificados',['alimentación','diuresis','deposiciones']),
-    section('vitales','Signos vitales y antropometría',[],'Edad, unidades y momento de medición',['peso','talla','temperatura']),
-    section('examen','Examen físico y desarrollo',[],'Solo datos explorados',['desarrollo','examen']),
-    section('estudios','Exámenes',[],'Resultados confirmados',['laboratorio','radiografía']),
-    section('tratamiento','Tratamiento y respuesta',[],'Dosis registradas con peso si documentado',['tratamiento','antibiótico']),
-    section('plan','Conducta y seguimiento',[],'Plan confirmado',['plan','educación'])
+    // Basado en el esquema SOAP CONIN aportado por el usuario; hallazgos opcionales.
+    section('subjetivo','Subjetivo',[],'Fuente (TENS, cuidador, paciente), noche, fiebre, tos, coriza, tolerancia alimentaria, vómitos, diuresis y deposiciones. Consigna solo lo preguntado',['tens','noche','tos','coriza','alimentacion','diuresis','deposiciones']),
+    section('general','General',[],'Vigilia, reactividad, esfuerzo respiratorio, hidratación y perfusión observados hoy',['activo','reactivo','afebril','general']),
+    section('piel','Piel',[],'Hidratación, lesiones y llenado capilar solamente si se exploraron',['piel','turgor','llenado capilar']),
+    section('cabeza_cuello','Cabeza y cuello',[],'Fontanelas, pupilas, cavidad oral, cuello, válvula derivativa y accesos solo cuando se examinen',['cabeza','craneo','fontanela','pupilas','cuello']),
+    section('torax','Tórax / cardiopulmonar',[],'Auscultación y mecánica respiratoria del examen actual; no inferir normalidad',['torax','pulmonar','roncus','soplos']),
+    section('abdomen','Abdomen',[],'RHA, palpación y gastrostomía; describir estado del estoma si fue evaluado',['abdomen','gtt','gastrostomia']),
+    section('genitourinario','Genitourinario',[],'Genitales y región perianal solo si fueron explorados',['genital','perianal','testiculos']),
+    section('extremidades','Extremidades',[],'Tono, fuerza, movilidad, pulsos, ortesis, contracturas y postura',['extremidades','ortesis','tono','fuerza']),
+    section('neurologico','Neurológico y desarrollo',[],'Interacción, contacto visual, sostén cefálico, sedestación, marcha, lenguaje, clonus o movimientos constatados',['neurologico','desarrollo','clonus','sedestacion','lenguaje']),
+    section('dispositivos','Dispositivos y accesos',[],'SNG, GTT, derivación ventriculoperitoneal: ubicación, funcionamiento y piel circundante solo si se verificó',['sonda','gtt','válvula','derivacion']),
+    section('apreciacion','Apreciación diagnóstica',[],'Diagnóstico o apreciación expresamente documentada; no deducir por signos vitales',['apreciacion','diagnostico','problema']),
+    section('plan','Planes',[],'Solo decisiones confirmadas por el equipo; no añadir «mantener indicaciones» automáticamente',['planes','plan','indicaciones'])
   ]},
   aps:{name:'APS / CESFAM',icon:'🌿',sections:[
     section('motivo','Motivo y problemas de seguimiento',[],'Control crónico u otra consulta',['control','motivo']),

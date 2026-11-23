@@ -6,10 +6,12 @@ export const FORMAT_VERSION=1;
 export const FORMAT_KEY_PREFIX='tora:v08:formatos:';
 const DEFAULT_HEADINGS=['Identificación','Antecedentes mórbidos','Evolución del día','Signos vitales','Examen físico','Problemas y planes'];
 const GENERAL_HEADINGS=['Identificación','Motivo de evaluación','Antecedentes relevantes','Evolución y hallazgos','Examen clínico','Problemas y planes'];
+const PED_CONIN_HEADINGS=['SUBJETIVO','OBJETIVO','CSV','GENERAL','PIEL','CABEZA Y CUELLO','TÓRAX','ABDOMEN','GENITOURINARIO','EXTREMIDADES','NEUROLÓGICO','APRECIACIÓN DIAGNÓSTICA','PLANES'];
 const PSY_HEADINGS=['Presentación y conciencia','Actitud y psicomotricidad','Ánimo y afectividad','Lenguaje y pensamiento','Sensopercepción','Insight y juicio de realidad','Riesgo y plan'];
 export function defaultFormat(specialty='interna') {
- const headings=specialty==='psiquiatria'?PSY_HEADINGS:specialty==='interna'?DEFAULT_HEADINGS:GENERAL_HEADINGS;
- return {version:FORMAT_VERSION,specialty,name:'Mi formato de '+(FLOW_SPECIALTIES[specialty]?.name||'evolución'),headings:[...headings],instruction:'Redacción médica formal, con frases completas y sin agregar hallazgos no evaluados.',updatedAt:null};
+ const headings=specialty==='pediatria'?PED_CONIN_HEADINGS:specialty==='psiquiatria'?PSY_HEADINGS:specialty==='interna'?DEFAULT_HEADINGS:GENERAL_HEADINGS;
+ const instruction=specialty==='pediatria'?'Formato SOAP CONIN: S fuente y evolución referida; O solo examen actual y CSV; A apreciación documentada; P planes confirmados. No completar normalidades ni repetir hallazgos anteriores como actuales.':'Redacción médica formal, con frases completas y sin agregar hallazgos no evaluados.';
+ return {version:FORMAT_VERSION,specialty,name:specialty==='pediatria'?'Pediatría · SOAP CONIN':'Mi formato de '+(FLOW_SPECIALTIES[specialty]?.name||'evolución'),headings:[...headings],instruction,updatedAt:null};
 }
 export function validateClinicalFormat(format,specialty){
  if(!FLOW_SPECIALTIES[specialty])throw Error('Especialidad de formato inválida.');
