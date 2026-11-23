@@ -1,5 +1,5 @@
 import {FLOW_SPECIALTIES,TRAUMA_REGIONS} from './workflow-config.js';
-import {emptyWorkflow,validateWorkflow,workflowFindings,workflowLocalDraft,VITAL_FIELDS,PEDIATRIC_EXTRA_VITAL_FIELDS} from './workflow-engine.js';
+import {emptyWorkflow,validateWorkflow,workflowFindings,workflowLocalDraft,VITAL_FIELDS,PEDIATRIC_EXTRA_VITAL_FIELDS,updatePediatricSection} from './workflow-engine.js';
 import {MENTAL_DOMAINS} from './mental-exam.js';
 import {loadFormat,saveFormat,defaultFormat} from './clinical-formats.js';
 import {cloudMe,remoteFormats,remoteSaveFormat,remoteSaveEvolution,remoteEvolutions,installAdminNav} from './tora-cloud.js';
@@ -72,7 +72,34 @@ function renderMental(){
  }
 }
 const PSY_EXTRA=['eventos','farmacos','plan'];
-function renderSections(){const root=$('sections');root.replaceChildren();const defList=FLOW_SPECIALTIES[data.specialty].sections.filter(d=>data.specialty==='psiquiatria'?PSY_EXTRA.includes(d.id):d.id!=='vitales');$('section-heading').textContent=data.specialty==='psiquiatria'?'Otros antecedentes y tratamiento':data.specialty==='pediatria'?'Examen CONIN por apartados SOAP':'Otros hallazgos clínicos';for(const def of defList){const item=data.sections.find(s=>s.id===def.id);const outer=el('details','compact-domain');outer.open=openSections.has(def.id);outer.ontoggle=()=>{if(outer.open)openSections.add(def.id);else openSections.delete(def.id)};const head=el('summary','compact-head');head.append(el('strong','',def.label));const chip=el('span','mini-chip',statusLabels[item.status]);head.append(chip);outer.append(head);const body=el('div','compact-body');const statLab=el('label','','Evaluación');const stat=el('select');setOptions(stat,data.docType==='diaria'?[['pendiente','No evaluado'],['nuevo','Hallazgo actual'],['cambio','Cambió hoy'],['igual','Reevaluado sin cambios']]:[['pendiente','No registrado'],['nuevo','Hallazgo actual']]);stat.value=item.status;stat.onchange=()=>{item.status=stat.value;if(item.status==='pendiente'){item.selected=[];item.notes='';item.source='no_precisada'}chip.textContent=statusLabels[item.status];renderSections();changes()};body.append(statLab,stat);
+function renderPediatricSections(root, definitions){
+  // Entrada directa estilo SOAP: sin «Evaluado/No evaluado», ni desplegables.
+  const groupTitles={subjetivo:'S · SUBJETIVO',general:'O · OBJETIVO / EXAMEN FÍSICO',apreciacion:'A · APRECIACIÓN DIAGNÓSTICA',plan:'P · PLANES'};
+  for(const def of definitions){
+    if(groupTitles[def.id]){
+      const heading=el('h3','pediatric-soap-heading',groupTitles[def.id]);
+      root.append(heading);
+    }
+    const item=data.sections.find(s=>s.id===def.id);
+    if(!item)continue;
+    const box=el('div','pediatric-soap-entry');
+    const label=el('label','',def.label);
+    const textarea=el('textarea');
+    textarea.id='ped-soap-'+def.id;
+    label.htmlFor=textarea.id;
+    textarea.rows=def.id==='subjetivo'?4:2;
+    textarea.maxLength=2200;
+    textarea.placeholder=def.hint||'Escribe aquí los hallazgos registrados';
+    textarea.value=item.notes||'';
+    textarea.oninput=()=>{
+      updatePediatricSection(item,textarea.value);
+      changes();
+    };
+    box.append(label,textarea);
+    root.append(box);
+  }
+}
+function renderSections(){const root=$('sections');root.replaceChildren();const defList=FLOW_SPECIALTIES[data.specialty].sections.filter(d=>data.specialty==='psiquiatria'?PSY_EXTRA.includes(d.id):d.id!=='vitales');$('section-heading').textContent=data.specialty==='psiquiatria'?'Otros antecedentes y tratamiento':data.specialty==='pediatria'?'Evolución pediátrica · Escribe directamente':'Otros hallazgos clínicos';if(data.specialty==='pediatria'){renderPediatricSections(root,defList);return;}for(const def of defList){const item=data.sections.find(s=>s.id===def.id);const outer=el('details','compact-domain');outer.open=openSections.has(def.id);outer.ontoggle=()=>{if(outer.open)openSections.add(def.id);else openSections.delete(def.id)};const head=el('summary','compact-head');head.append(el('strong','',def.label));const chip=el('span','mini-chip',statusLabels[item.status]);head.append(chip);outer.append(head);const body=el('div','compact-body');const statLab=el('label','','Evaluación');const stat=el('select');setOptions(stat,data.docType==='diaria'?[['pendiente','No evaluado'],['nuevo','Hallazgo actual'],['cambio','Cambió hoy'],['igual','Reevaluado sin cambios']]:[['pendiente','No registrado'],['nuevo','Hallazgo actual']]);stat.value=item.status;stat.onchange=()=>{item.status=stat.value;if(item.status==='pendiente'){item.selected=[];item.notes='';item.source='no_precisada'}chip.textContent=statusLabels[item.status];renderSections();changes()};body.append(statLab,stat);
  if(item.status!=='pendiente'){if(def.quick.length){body.append(el('label','','Opciones constatadas'));const options=el('div','quick-list');for(const choice of def.quick){const b=el('button','quick',choice);b.type='button';b.setAttribute('aria-pressed',String(item.selected.includes(choice)));b.onclick=()=>{item.selected=item.selected.includes(choice)?item.selected.filter(v=>v!==choice):[...item.selected,choice];b.setAttribute('aria-pressed',String(item.selected.includes(choice)));changes()};options.append(b)}body.append(options)}const noteLab=el('label','','Información específica');const note=el('textarea');note.rows=3;note.maxLength=2200;note.placeholder=def.hint||'Describe lo realmente evaluado';note.value=item.notes;note.oninput=()=>{item.notes=note.value;changes()};const lab=el('label','','Fuente');const src=el('select');setOptions(src,Object.entries(sources));src.value=item.source;src.onchange=()=>{item.source=src.value;changes()};body.append(noteLab,note,lab,src)}else body.append(el('p','input-hint','Este apartado no se incorporará a la evolución.'));outer.append(body);root.append(outer)}}
 function renderCustom(){const root=$('custom-sections');root.replaceChildren();data.custom.forEach((item,index)=>{const wrap=el('div','custom-entry');const title=el('input');title.value=item.label;title.maxLength=65;title.placeholder='Nombre del apartado';title.oninput=()=>{item.label=title.value;changes()};const stat=el('select');setOptions(stat,[['pendiente','No evaluado'],['nuevo','Hallazgo actual'],['cambio','Cambió hoy'],['igual','Reevaluado sin cambios']]);stat.value=item.status;stat.onchange=()=>{item.status=stat.value;if(item.status==='pendiente')item.notes='';renderCustom();changes()};const rm=el('button','text-button danger','Eliminar');rm.type='button';rm.onclick=()=>{data.custom.splice(index,1);renderCustom();changes()};wrap.append(title,stat,rm);if(item.status!=='pendiente'){const note=el('textarea');note.rows=2;note.maxLength=2200;note.value=item.notes;note.placeholder='Describe el hallazgo constatado';note.oninput=()=>{item.notes=note.value;changes()};wrap.append(note)}root.append(wrap)})}
 function readWorkflow(){data.previous=$('previous').value;data.general=$('general').value;format();return validateWorkflow({...data,format:'adaptable'})}

@@ -8,6 +8,16 @@ const MAX_NOTE=2200;
 export const PEDIATRIC_EXTRA_VITAL_FIELDS=[['fio2','FiO₂','%']];
 export const VITAL_FIELDS=[['pa','PA','mmHg'],['fc','FC','lpm'],['fr','FR','rpm'],['temp','T°','°C'],['sat','SatO₂','%']];
 export function vitalSignsText(vitals={}){return VITAL_FIELDS.filter(([key])=>String(vitals?.[key]||'').trim()).map(([key,label,unit])=>`${label} ${String(vitals[key]).trim()} ${unit}`).concat(String(vitals?.fio2||'').trim()?[`FiO₂ ${String(vitals.fio2).trim()} %`]:[]).join(', ')}
+// Interfaz pediátrica rápida: escribir texto basta para activar el apartado.
+// El estado permanece en el modelo de datos por compatibilidad con el servidor.
+export function updatePediatricSection(section, text){
+  if(!section || typeof section!=='object')throw Error('Apartado pediátrico inválido.');
+  section.notes=String(text??'');
+  section.status=section.notes.trim()?'nuevo':'pendiente';
+  section.selected=[];
+  section.source='no_precisada'; // En pediatría se expresa la fuente directamente en el texto.
+  return section;
+}
 export function presentSection(section,original){
   // Coincidencias SOLO orientativas. No transformarlas automáticamente en hallazgos de hoy.
   if(!strip(original))return [];
@@ -112,7 +122,7 @@ export function workflowFindings(data){
  for(const part of [...data.sections,...data.custom]){
    if(part.status==='pendiente')continue;
    if(part.status==='igual'&&!part.notes&&!part.selected?.length)warnings.push(`${part.label}: no se detalló lo confirmado.`);
-   if(part.source==='no_precisada')warnings.push(`${part.label}: no se precisó si es referido, observado o documentado.`);
+   if(data.specialty!=='pediatria'&&part.source==='no_precisada')warnings.push(`${part.label}: no se precisó si es referido, observado o documentado.`);
  }
  if(data.specialty==='psiquiatria'&&!data.mentalExam?.some(s=>s.id==='riesgo')&&!data.sections.some(s=>s.id==='riesgo'&&s.status!=='pendiente'))missing.push('Suicidalidad: exploración actual no registrada; nunca interpretar como negativa por omisión.');
  if(data.specialty==='ginecologia'&&data.obstetrics?.pregnancy==='si'&&!data.obstetrics.eg)missing.push('Gestación actual: edad gestacional no informada.');
